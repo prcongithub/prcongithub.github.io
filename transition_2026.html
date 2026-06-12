@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>School Learning Plan Viewer</title>
+<style>
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: light;
+  --bg: #f5f7fb;
+  --card-bg: #ffffff;
+  --border: #e1e6f0;
+  --border-soft: #eef1f7;
+  --primary: #4051b5;
+  --text-main: #1f3044;
+  --text-muted: #5f6c7b;
+  --badge-lesson-bg: #e4e8ff;
+  --badge-lesson-text: #273c75;
+  --badge-wah-bg: #e6f5ec;
+  --badge-wah-text: #1b5e20;
+  --badge-warning-bg: #ffe5e5;
+  --badge-warning-text: #c62828;
+  --wah-highlight: #f5fcf5;
+  --shadow: 0 12px 30px rgba(31, 48, 68, 0.08);
+  font-size: 16px;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text-main);
+  line-height: 1.5;
+}
+
+a {
+  color: inherit;
+}
+
+.app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+header h1 {
+  margin: 0 0 0.35rem 0;
+  font-size: 1.9rem;
+  font-weight: 700;
+}
+
+header p {
+  margin: 0 0 1.5rem 0;
+  color: var(--text-muted);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  background: var(--card-bg);
+  padding: 1rem 1.25rem;
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  margin-bottom: 1.75rem;
+}
+
+.control {
+  flex: 1 1 260px;
+  min-width: 220px;
+}
+
+.control label {
+  display: block;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+  font-size: 0.92rem;
+}
+
+.control input[type="text"] {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #ccd4e0;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.control input[type="text"]:focus {
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(64, 81, 181, 0.18);
+}
+
+.toggle-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.toggle-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #eef2fa;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  user-select: none;
+  border: 1px solid transparent;
+  transition: background 0.2s, border 0.2s;
+}
+
+.toggle-option input {
+  accent-color: var(--primary);
+}
+
+.toggle-option.active {
+  background: #dfe6ff;
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.actions button {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.actions button.secondary {
+  background: #fff;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+}
+
+.actions button:hover {
+  filter: brightness(0.95);
+}
+
+.day-card {
+  background: var(--card-bg);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+}
+
+.day-card.tomorrow {
+  border: 2px solid #4051b5;
+  box-shadow: 0 0 0 3px rgba(64, 81, 181, 0.15), var(--shadow);
+}
+
+.day-card.tomorrow .day-header {
+  background: linear-gradient(135deg, #f0f3ff 0%, #e4e8ff 100%);
+}
+
+.day-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent;
+  border: none;
+  padding: 1.05rem 1.25rem;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s;
+}
+
+.day-header:hover,
+.day-card.open .day-header {
+  background: #f0f3ff;
+}
+
+.header-left {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.date-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.subject-count {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  background: rgba(64, 81, 181, 0.08);
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+}
+
+.badge-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.badge-lesson {
+  background: var(--badge-lesson-bg);
+  color: var(--badge-lesson-text);
+}
+
+.badge-wah {
+  background: var(--badge-wah-bg);
+  color: var(--badge-wah-text);
+}
+
+.badge-warning {
+  background: var(--badge-warning-bg);
+  color: var(--badge-warning-text);
+}
+
+.badge-tomorrow {
+  background: linear-gradient(135deg, #4051b5 0%, #5865c7 100%);
+  color: #ffffff;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(64, 81, 181, 0.3);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.chevron {
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid var(--primary);
+  border-bottom: 2px solid var(--primary);
+  transform: rotate(45deg);
+  transition: transform 0.2s;
+}
+
+.day-card.open .chevron {
+  transform: rotate(-135deg);
+}
+
+.day-body {
+  display: none;
+  border-top: 1px solid var(--border-soft);
+  padding: 0 1.25rem 1.35rem;
+  background: #fbfcff;
+}
+
+.day-card.open .day-body {
+  display: block;
+}
+
+.view-toggle {
+  display: inline-flex;
+  background: #eef2fa;
+  padding: 0.25rem;
+  border-radius: 999px;
+  margin: 1.25rem 0 1rem;
+  gap: 0.25rem;
+}
+
+.view-toggle button {
+  border: none;
+  background: transparent;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: background 0.2s, color 0.2s;
+}
+
+.view-toggle button.active {
+  background: var(--card-bg);
+  color: var(--primary);
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(31, 48, 68, 0.1);
+}
+
+.view-section {
+  display: none;
+}
+
+.view-section.active {
+  display: block;
+}
+
+.subject-grid {
+  --subject-grid-columns: minmax(150px, 0.9fr) minmax(200px, 1fr) minmax(200px, 1fr);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--card-bg);
+}
+
+.subject-row {
+  display: grid;
+  grid-template-columns: var(--subject-grid-columns);
+  border-bottom: 1px solid var(--border);
+}
+
+.subject-row:last-child {
+  border-bottom: none;
+}
+
+.subject-row.header {
+  background: #f5f7fb;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.subject-row:not(.header):nth-child(even) {
+  background: #f9fbff;
+}
+
+.cell {
+  padding: 0.85rem 0.95rem;
+  border-right: 1px solid var(--border);
+  min-height: 100%;
+  position: relative;
+  font-size: 0.95rem;
+}
+
+.cell:last-child {
+  border-right: none;
+}
+
+.subject-cell {
+  font-weight: 600;
+  color: #2d3a52;
+}
+
+.wah-cell {
+  background: var(--wah-highlight);
+  border-left: 1px solid #d8eedc;
+}
+
+.wah-cell.has-content {
+  box-shadow: inset 3px 0 0 #9bcba7;
+}
+
+.lesson-cell.has-content {
+  box-shadow: inset 3px 0 0 rgba(64, 81, 181, 0.45);
+}
+
+.no-lesson {
+  background: rgba(198, 40, 40, 0.12);
+  color: var(--badge-warning-text);
+  padding: 0.05rem 0.25rem;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.empty-state {
+  padding: 1rem;
+  background: #fff4d6;
+  border: 1px solid #ffd27f;
+  color: #8a5a00;
+  border-radius: 10px;
+  font-size: 0.95rem;
+}
+
+.raw-view {
+  margin-top: 1.2rem;
+}
+
+.raw-controls {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.6rem;
+  gap: 0.5rem;
+}
+
+.raw-controls button {
+  background: #eef2fa;
+  color: #2f3c54;
+  border: 1px solid #c9d4ee;
+  border-radius: 999px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+}
+
+.raw-controls button.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.raw-table-wrapper {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: auto;
+  background: var(--card-bg);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+}
+
+.raw-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+  table-layout: fixed;
+  font-size: 0.85rem;
+}
+
+.raw-table th,
+.raw-table td {
+  border-bottom: 1px solid var(--border);
+  padding: 0.65rem 0.75rem;
+  vertical-align: top;
+  text-align: left;
+}
+
+.raw-table th {
+  background: #f5f7fb;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.raw-table tr:last-child td {
+  border-bottom: none;
+}
+
+.raw-table:not(.wide) th,
+.raw-table:not(.wide) td {
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.raw-table.wide {
+  table-layout: auto;
+}
+
+.raw-table.wide th,
+.raw-table.wide td {
+  white-space: normal;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.no-results {
+  text-align: center;
+  padding: 2.25rem 1rem;
+  border: 2px dashed #c1cbe0;
+  border-radius: 14px;
+  color: var(--text-muted);
+  background: rgba(205, 213, 235, 0.2);
+  font-size: 1rem;
+  margin-top: 2.5rem;
+}
+
+@media (max-width: 992px) {
+  .subject-row {
+    grid-template-columns: minmax(120px, 0.9fr) minmax(180px, 1fr) minmax(180px, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .controls {
+    padding: 1rem;
+  }
+
+  .actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .header-left {
+    gap: 0.5rem;
+  }
+
+  .subject-grid {
+    border: none;
+    background: transparent;
+  }
+
+  .subject-row.header {
+    display: none;
+  }
+
+  .subject-row {
+    grid-template-columns: 1fr;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+    background: var(--card-bg);
+  }
+
+  .subject-row:not(.header):nth-child(even) {
+    background: var(--card-bg);
+  }
+
+  .cell {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .cell:last-child {
+    border-bottom: none;
+  }
+
+  .cell::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: 0.4rem;
+  }
+
+  .wah-cell {
+    border-left: none;
+  }
+
+  .raw-table {
+    min-width: 480px;
+  }
+}
+
+@media (max-width: 540px) {
+  .date-title {
+    font-size: 1rem;
+  }
+
+  .subject-count {
+    font-size: 0.8rem;
+  }
+
+  .badge {
+    font-size: 0.68rem;
+  }
+
+  .control {
+    min-width: 100%;
+  }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Day-wise Learning Plan</h1>
+    <p>Browse lesson plans and work-at-home assignments by date. Use the filters to quickly find the information you need.</p>
+  </header>
+
+  <section class="controls">
+    <div class="control">
+      <label for="searchInput">Search across dates, subjects, and notes</label>
+      <input type="text" id="searchInput" placeholder="Search… (e.g., English, No Lesson, worksheet)">
+    </div>
+    <div class="control">
+      <label>Filters</label>
+      <div class="toggle-group">
+        <label class="toggle-option" for="filterWAH">
+          <input type="checkbox" id="filterWAH">
+          Show only days with WAH
+        </label>
+        <label class="toggle-option" for="filterLesson">
+          <input type="checkbox" id="filterLesson">
+          Show only days with Lesson Plan
+        </label>
+      </div>
+    </div>
+    <div class="actions">
+      <button type="button" id="expandCollapseBtn">Expand all</button>
+    </div>
+  </section>
+
+  <main id="daysContainer"></main>
+
+  <div id="noResults" class="no-results hidden">
+    No days match your filters or search. Try adjusting your criteria.
+  </div>
+</div>
+
+<script>
+let data = {};
+
+// Fetch data from API
+async function fetchData() {
+  try {
+    const response = await fetch('https://workflows.ur-nl.com/webhook/fcf7a66b-f06d-4132-a5cd-735fb9a98014');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    data = await response.json();
+    data = data.data;
+    init();
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    const container = document.getElementById("daysContainer");
+    const errorDiv = document.createElement("div");
+    errorDiv.className = "no-results";
+    errorDiv.textContent = `Failed to load schedule data: ${error.message}`;
+    container.appendChild(errorDiv);
+  }
+}
+
+// Call fetchData when page loads
+fetchData();
+
+(function() {
+  const ignoreColumns = new Set(["row_number", "Date", "Component", "PLEASE DO NOT REMOVE THIS COLUMN.", ""]);
+  const container = document.getElementById("daysContainer");
+  const searchInput = document.getElementById("searchInput");
+  const filterWAH = document.getElementById("filterWAH");
+  const filterLesson = document.getElementById("filterLesson");
+  const expandCollapseBtn = document.getElementById("expandCollapseBtn");
+  const noResultsEl = document.getElementById("noResults");
+  const toggleLabels = document.querySelectorAll(".toggle-option");
+
+  const dayCards = [];
+  let allExpanded = false;
+
+  // Function to check if a date string represents tomorrow
+  function isTomorrow(dateStr) {
+    try {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+
+      // Parse date strings like "Fri, 6 Feb" or "Wed, 28 Jan"
+      const parts = dateStr.match(/(\w{3}),?\s+(\d{1,2})(?:st|nd|rd|th)?\s+(\w{3})/);
+      if (!parts) return false;
+
+      const day = parseInt(parts[2]);
+      const monthStr = parts[3];
+      const monthMap = {
+        'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+        'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+      };
+      const month = monthMap[monthStr];
+
+      if (month === undefined) return false;
+
+      // Create date with current year
+      const checkDate = new Date(tomorrow.getFullYear(), month, day);
+
+      // If the date has passed this year, try next year
+      if (checkDate < new Date()) {
+        checkDate.setFullYear(checkDate.getFullYear() + 1);
+      }
+
+      return checkDate.getTime() === tomorrow.getTime();
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function escapeHTML(value) {
+    return value.replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+  }
+
+  function formatCellValue(raw) {
+    if (raw === null || raw === undefined) {
+      return {
+        displayHTML: "—",
+        plainText: "",
+        isEmpty: true,
+        containsNoLesson: false
+      };
+    }
+    const stringValue = String(raw);
+    const trimmed = stringValue.trim();
+    if (!trimmed) {
+      return {
+        displayHTML: "—",
+        plainText: "",
+        isEmpty: true,
+        containsNoLesson: false
+      };
+    }
+    const escaped = escapeHTML(stringValue);
+    const withBreaks = escaped.replace(/\r\n|\r|\n/g, "<br>");
+    const containsNoLesson = /no\s*lesson/i.test(stringValue);
+    const highlighted = withBreaks.replace(/no\s*lesson/gi, match => `<span class="no-lesson">${match}</span>`);
+    return {
+      displayHTML: highlighted,
+      plainText: trimmed.replace(/\s+/g, " "),
+      isEmpty: false,
+      containsNoLesson
+    };
+  }
+
+  function getSubjectsInOrder(rows) {
+    const subjects = [];
+    rows.forEach(row => {
+      if (!row) return;
+      Object.keys(row).forEach(key => {
+        if (ignoreColumns.has(key)) return;
+        if (!subjects.includes(key)) {
+          subjects.push(key);
+        }
+      });
+    });
+    return subjects;
+  }
+
+  function createBadge(text, className) {
+    const span = document.createElement("span");
+    span.className = `badge ${className}`;
+    span.textContent = text;
+    return span;
+  }
+
+  function setCardOpen(card, open) {
+    const headerBtn = card.querySelector(".day-header");
+    const body = card.querySelector(".day-body");
+    const chevron = card.querySelector(".chevron");
+    if (open) {
+      card.classList.add("open");
+    } else {
+      card.classList.remove("open");
+    }
+    if (headerBtn) {
+      headerBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+    if (body) {
+      body.classList.toggle("hidden", !open);
+    }
+  }
+
+  function buildRawTable(columns, rows) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "raw-table-wrapper";
+
+    const table = document.createElement("table");
+    table.className = "raw-table";
+
+    const thead = document.createElement("thead");
+    const headerRow = document.createElement("tr");
+    columns.forEach(col => {
+      const th = document.createElement("th");
+      th.textContent = col;
+      headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement("tbody");
+    rows.forEach(row => {
+      const tr = document.createElement("tr");
+      columns.forEach(col => {
+        const td = document.createElement("td");
+        const value = row && Object.prototype.hasOwnProperty.call(row, col) ? row[col] : "";
+        const formatted = formatCellValue(value);
+        td.innerHTML = formatted.displayHTML;
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+
+    table.appendChild(tbody);
+    wrapper.appendChild(table);
+
+    return { wrapper, table };
+  }
+
+  function createDayCard(dateLabel, dayData) {
+    const card = document.createElement("article");
+    card.className = "day-card";
+    const bodyId = `day-body-${Math.random().toString(36).slice(2, 9)}`;
+
+    const headerBtn = document.createElement("button");
+    headerBtn.type = "button";
+    headerBtn.className = "day-header";
+    headerBtn.setAttribute("aria-expanded", "false");
+    headerBtn.setAttribute("aria-controls", bodyId);
+
+    const headerLeft = document.createElement("div");
+    headerLeft.className = "header-left";
+
+    const dateTitle = document.createElement("div");
+    dateTitle.className = "date-title";
+    dateTitle.textContent = dateLabel;
+    headerLeft.appendChild(dateTitle);
+
+    const badgeGroup = document.createElement("div");
+    badgeGroup.className = "badge-group";
+
+    const headerRight = document.createElement("div");
+    headerRight.className = "header-right";
+
+    const subjectCount = document.createElement("span");
+    subjectCount.className = "subject-count";
+
+    const chevron = document.createElement("span");
+    chevron.className = "chevron";
+    chevron.setAttribute("aria-hidden", "true");
+
+    headerRight.appendChild(subjectCount);
+    headerRight.appendChild(chevron);
+
+    headerBtn.appendChild(headerLeft);
+    headerBtn.appendChild(headerRight);
+
+    const body = document.createElement("div");
+    body.className = "day-body hidden";
+    body.id = bodyId;
+
+    const lessonRow = dayData && dayData.lesson_plan ? dayData.lesson_plan : null;
+    const wahRow = dayData && dayData.wah ? dayData.wah : null;
+
+    const subjectOrder = getSubjectsInOrder([lessonRow, wahRow]);
+    subjectCount.textContent = `Subjects: ${subjectOrder.length}`;
+
+    let hasLessonEntries = false;
+    let hasWAHEntries = false;
+    let hasNoLessonEntries = false;
+    const searchPieces = [dateLabel];
+
+    const viewToggle = document.createElement("div");
+    viewToggle.className = "view-toggle";
+
+    const planTabBtn = document.createElement("button");
+    planTabBtn.type = "button";
+    planTabBtn.className = "active";
+    planTabBtn.textContent = "Plan view";
+    planTabBtn.setAttribute("aria-pressed", "true");
+
+    const rawTabBtn = document.createElement("button");
+    rawTabBtn.type = "button";
+    rawTabBtn.textContent = "Raw data";
+    rawTabBtn.setAttribute("aria-pressed", "false");
+
+    viewToggle.appendChild(planTabBtn);
+    viewToggle.appendChild(rawTabBtn);
+
+    const planSection = document.createElement("div");
+    planSection.className = "view-section active plan-section";
+
+    const rawSection = document.createElement("div");
+    rawSection.className = "view-section raw-section";
+
+    if (subjectOrder.length) {
+      const grid = document.createElement("div");
+      grid.className = "subject-grid";
+
+      const headerRow = document.createElement("div");
+      headerRow.className = "subject-row header";
+
+      const subjectHeader = document.createElement("div");
+      subjectHeader.className = "cell";
+      subjectHeader.textContent = "Subject";
+      headerRow.appendChild(subjectHeader);
+
+      const lessonHeader = document.createElement("div");
+      lessonHeader.className = "cell";
+      lessonHeader.textContent = "Lesson Plan";
+      headerRow.appendChild(lessonHeader);
+
+      const wahHeader = document.createElement("div");
+      wahHeader.className = "cell";
+      wahHeader.textContent = "WAH (Work at Home)";
+      headerRow.appendChild(wahHeader);
+
+      grid.appendChild(headerRow);
+
+      subjectOrder.forEach(subject => {
+        const row = document.createElement("div");
+        row.className = "subject-row";
+
+        const subjectCell = document.createElement("div");
+        subjectCell.className = "cell subject-cell";
+        subjectCell.dataset.label = "Subject";
+        const subjectDisplay = escapeHTML(subject).replace(/\r\n|\r|\n/g, "<br>");
+        subjectCell.innerHTML = subjectDisplay || "—";
+        row.appendChild(subjectCell);
+
+        const lessonCell = document.createElement("div");
+        lessonCell.className = "cell lesson-cell";
+        lessonCell.dataset.label = "Lesson Plan";
+        const lessonValue = lessonRow && Object.prototype.hasOwnProperty.call(lessonRow, subject) ? lessonRow[subject] : "";
+        const lessonInfo = formatCellValue(lessonValue);
+        lessonCell.innerHTML = lessonInfo.displayHTML;
+        if (!lessonInfo.isEmpty) {
+          lessonCell.classList.add("has-content");
+          hasLessonEntries = true;
+          searchPieces.push(lessonInfo.plainText);
+        }
+        if (lessonInfo.containsNoLesson) {
+          hasNoLessonEntries = true;
+        }
+        row.appendChild(lessonCell);
+
+        const wahCell = document.createElement("div");
+        wahCell.className = "cell wah-cell";
+        wahCell.dataset.label = "WAH (Work at Home)";
+        const wahValue = wahRow && Object.prototype.hasOwnProperty.call(wahRow, subject) ? wahRow[subject] : "";
+        const wahInfo = formatCellValue(wahValue);
+        wahCell.innerHTML = wahInfo.displayHTML;
+        if (!wahInfo.isEmpty) {
+          wahCell.classList.add("has-content");
+          hasWAHEntries = true;
+          searchPieces.push(wahInfo.plainText);
+        }
+        if (wahInfo.containsNoLesson) {
+          hasNoLessonEntries = true;
+        }
+        row.appendChild(wahCell);
+
+        grid.appendChild(row);
+      });
+
+      planSection.appendChild(grid);
+    } else {
+      const empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.textContent = "No subjects were listed for this date.";
+      planSection.appendChild(empty);
+    }
+
+    const componentRows = [];
+    if (lessonRow) componentRows.push(lessonRow);
+    if (wahRow) componentRows.push(wahRow);
+
+    if (componentRows.length) {
+      const rawColumns = getSubjectsInOrder(componentRows);
+      // Ensure row_number, Component, Date appear first if available.
+      const priority = ["row_number", "Component", "Date"];
+      const orderedColumns = [];
+      priority.forEach(col => {
+        if (!ignoreColumns.has(col) && rawColumns.includes(col)) {
+          orderedColumns.push(col);
+        }
+      });
+      rawColumns.forEach(col => {
+        if (!orderedColumns.includes(col)) {
+          orderedColumns.push(col);
+        }
+      });
+
+      const { wrapper: tableWrapper, table } = buildRawTable(orderedColumns, componentRows);
+
+      const rawControls = document.createElement("div");
+      rawControls.className = "raw-controls";
+      const toggleWidthBtn = document.createElement("button");
+      toggleWidthBtn.type = "button";
+      toggleWidthBtn.textContent = "Expand columns";
+      rawControls.appendChild(toggleWidthBtn);
+
+      toggleWidthBtn.addEventListener("click", () => {
+        table.classList.toggle("wide");
+        const wide = table.classList.contains("wide");
+        toggleWidthBtn.textContent = wide ? "Compact columns" : "Expand columns";
+        toggleWidthBtn.classList.toggle("active", wide);
+      });
+
+      rawSection.appendChild(rawControls);
+      rawSection.appendChild(tableWrapper);
+    } else {
+      const emptyRaw = document.createElement("div");
+      emptyRaw.className = "empty-state";
+      emptyRaw.textContent = "No raw data rows were provided for this date.";
+      rawSection.appendChild(emptyRaw);
+    }
+
+    // Check if this date is tomorrow and add highlight
+    const isTomorrowDate = isTomorrow(dateLabel);
+    if (isTomorrowDate) {
+      card.classList.add("tomorrow");
+    }
+
+    const badgeConfigs = [];
+
+    // Add "Tomorrow" badge first if applicable
+    if (isTomorrowDate) {
+      badgeConfigs.push({ text: "Tomorrow", className: "badge-tomorrow" });
+    }
+
+    if (hasLessonEntries) {
+      badgeConfigs.push({ text: "Lesson Plan", className: "badge-lesson" });
+    }
+    if (hasWAHEntries) {
+      badgeConfigs.push({ text: "WAH available", className: "badge-wah" });
+    }
+    /*
+    if (hasNoLessonEntries) {
+      badgeConfigs.push({ text: "Includes "No Lesson"", className: "badge-warning" });
+    }
+    */
+
+    if (badgeConfigs.length) {
+      badgeConfigs.forEach(cfg => badgeGroup.appendChild(createBadge(cfg.text, cfg.className)));
+      headerLeft.appendChild(badgeGroup);
+    }
+
+    body.appendChild(viewToggle);
+    body.appendChild(planSection);
+    body.appendChild(rawSection);
+
+    headerBtn.addEventListener("click", () => {
+      const isOpen = card.classList.contains("open");
+      setCardOpen(card, !isOpen);
+    });
+
+    planTabBtn.addEventListener("click", () => {
+      planTabBtn.classList.add("active");
+      planTabBtn.setAttribute("aria-pressed", "true");
+      rawTabBtn.classList.remove("active");
+      rawTabBtn.setAttribute("aria-pressed", "false");
+      planSection.classList.add("active");
+      rawSection.classList.remove("active");
+    });
+
+    rawTabBtn.addEventListener("click", () => {
+      rawTabBtn.classList.add("active");
+      rawTabBtn.setAttribute("aria-pressed", "true");
+      planTabBtn.classList.remove("active");
+      planTabBtn.setAttribute("aria-pressed", "false");
+      rawSection.classList.add("active");
+      planSection.classList.remove("active");
+    });
+
+    const lessonAvailable = hasLessonEntries ? "true" : "false";
+    const wahAvailable = hasWAHEntries ? "true" : "false";
+    const noLessonText = hasNoLessonEntries ? "true" : "false";
+
+    card.dataset.hasLesson = lessonAvailable;
+    card.dataset.hasWah = wahAvailable;
+    card.dataset.hasNoLesson = noLessonText;
+    card.dataset.search = searchPieces.join(" ").toLowerCase();
+
+    card.appendChild(headerBtn);
+    card.appendChild(body);
+    container.appendChild(card);
+    dayCards.push(card);
+  }
+
+  function syncToggleStyles() {
+    toggleLabels.forEach(label => {
+      const input = label.querySelector("input");
+      if (input) {
+        label.classList.toggle("active", input.checked);
+      }
+    });
+  }
+
+  function applyFilters() {
+    const searchTerm = searchInput.value.trim().toLowerCase();
+    const requireWAH = filterWAH.checked;
+    const requireLesson = filterLesson.checked;
+    let visibleCount = 0;
+
+    dayCards.forEach(card => {
+      const matchesSearch = !searchTerm || card.dataset.search.includes(searchTerm);
+      const matchesWAH = !requireWAH || card.dataset.hasWah === "true";
+      const matchesLesson = !requireLesson || card.dataset.hasLesson === "true";
+
+      if (matchesSearch && matchesWAH && matchesLesson) {
+        card.classList.remove("hidden");
+        visibleCount += 1;
+      } else {
+        card.classList.add("hidden");
+      }
+    });
+
+    noResultsEl.classList.toggle("hidden", visibleCount > 0);
+  }
+
+  function toggleAllCards() {
+    allExpanded = !allExpanded;
+    dayCards.forEach(card => {
+      if (!card.classList.contains("hidden")) {
+        setCardOpen(card, allExpanded);
+      }
+    });
+    expandCollapseBtn.textContent = allExpanded ? "Collapse all" : "Expand all";
+  }
+
+  function render() {
+    const dayEntries = Object.entries(data || {});
+    if (!dayEntries.length) {
+      const empty = document.createElement("div");
+      empty.className = "no-results";
+      empty.textContent = "No schedule data available. Please add data to get started.";
+      container.appendChild(empty);
+      return;
+    }
+    dayEntries.forEach(([dateLabel, dayData]) => {
+      createDayCard(dateLabel, dayData || {});
+    });
+  }
+
+  searchInput.addEventListener("input", () => {
+    applyFilters();
+  });
+
+  [filterWAH, filterLesson].forEach(input => {
+    input.addEventListener("change", () => {
+      syncToggleStyles();
+      applyFilters();
+    });
+  });
+
+  expandCollapseBtn.addEventListener("click", () => {
+    toggleAllCards();
+  });
+
+  // Initialize function to be called after data is loaded
+  window.init = function() {
+    render();
+    syncToggleStyles();
+    applyFilters();
+  };
+})();
+</script>
+</body>
+</html>
